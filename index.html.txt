@@ -1,0 +1,96 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+
+// Base de Dados Técnica
+const STATIONS = [
+  { id: "dp3", name: "DELTA Pro 3", cap: 4096, ac: 4000, boost: 8000, ebCap: 4096 },
+  { id: "dp", name: "DELTA Pro", cap: 3600, ac: 3600, boost: 4500, ebCap: 3600 },
+  { id: "d2m", name: "DELTA 2 Max", cap: 2048, ac: 2400, boost: 3100, ebCap: 2048 },
+  { id: "d2", name: "DELTA 2", cap: 1024, ac: 1800, boost: 2200, ebCap: 1024 },
+];
+
+const LIGHTS = [
+  { group: "Aputure STORM", models: [
+    { name: "STORM XT52", watts: 5200 },
+    { name: "STORM 1200x", watts: 1440 },
+    { name: "STORM 1000c", watts: 1200 },
+  ]},
+  { group: "Light Storm", models: [
+    { name: "LS 1200d Pro", watts: 1440 },
+    { name: "LS 600d Pro", watts: 720 },
+    { name: "LS 300x II", watts: 350 },
+  ]},
+  { group: "Amaran", models: [
+    { name: "Amaran 300c", watts: 360 },
+    { name: "Amaran 200d S", watts: 221 },
+  ]},
+];
+
+export default function McICalculator() {
+  const [station, setStation] = useState(STATIONS[0]);
+  const [lightWatts, setLightWatts] = useState(5200);
+  const [dimmer, setDimmer] = useState(100);
+  const [extraBattery, setExtraBattery] = useState(false);
+  const [xBoost, setXBoost] = useState(false);
+  const [result, setResult] = useState<{ h: number; m: number; load: number } | null>(null);
+
+  const calculate = () => {
+    const currentLoad = lightWatts * (dimmer / 100);
+    const limit = xBoost ? station.boost : station.ac;
+    const totalCap = extraBattery ? (station.cap + station.ebCap) : station.cap;
+
+    if (currentLoad > limit) {
+      setResult({ h: -1, m: -1, load: currentLoad }); // Sinaliza Overload
+    } else {
+      // 85% de eficiência realística
+      const hours = (totalCap * 0.85) / currentLoad;
+      setResult({ 
+        h: Math.floor(hours), 
+        m: Math.round((hours - Math.floor(hours)) * 60),
+        load: currentLoad 
+      });
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-[#0a0b0c] text-white flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[#16181a] rounded-[32px] p-8 border border-white/5 shadow-2xl">
+        
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-[11px] font-black tracking-[4px] text-[#00d1ff] uppercase">MCI ECOFLOW</h1>
+          <p className="text-[10px] text-gray-500 mt-2 font-medium tracking-wider">INTELIGÊNCIA EM ENERGIA</p>
+        </div>
+
+        {/* Estação */}
+        <div className="mb-6">
+          <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3 block">Estação</label>
+          <select 
+            className="w-full bg-[#1f2225] border border-white/5 p-4 rounded-xl outline-none focus:border-[#00d1ff] transition-all"
+            onChange={(e) => setStation(STATIONS.find(s => s.id === e.target.value)!)}
+          >
+            {STATIONS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+          
+          <div className="flex gap-3 mt-3">
+            <button 
+              onClick={() => setExtraBattery(!extraBattery)}
+              className={`flex-1 p-3 rounded-xl text-[11px] font-bold border transition-all ${extraBattery ? 'bg-[#00d1ff]/10 border-[#00d1ff] text-[#00d1ff]' : 'bg-[#1f2225] border-transparent text-gray-400'}`}
+            >
+              +1 BATERIA EXTRA
+            </button>
+            <button 
+              onClick={() => setXBoost(!xBoost)}
+              className={`flex-1 p-3 rounded-xl text-[11px] font-bold border transition-all ${xBoost ? 'bg-[#00d1ff]/10 border-[#00d1ff] text-[#00d1ff]' : 'bg-[#1f2225] border-transparent text-gray-400'}`}
+            >
+              X-BOOST
+            </button>
+          </div>
+        </div>
+
+        {/* Luz */}
+        <div className="mb-6">
+          <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3 block">Iluminador</label>
+          <select 
+            className="w-full bg-[#1f2225] border border-white/5 p-4 rounded-xl outline-none focus:border-[#00d1ff
